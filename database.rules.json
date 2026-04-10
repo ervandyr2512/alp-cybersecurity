@@ -1,0 +1,34 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
+    },
+    "donors": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "doctors": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "hospitals": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "screenings": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "medicalRecords": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "assignments": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
