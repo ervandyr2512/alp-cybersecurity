@@ -19,7 +19,9 @@ export default function HospitalRecordsPage() {
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
+  const [showDonorPicker, setShowDonorPicker] = useState(false);
   const [selectedDonorId, setSelectedDonorId] = useState('');
+  const [selectedHospitalId, setSelectedHospitalId] = useState('');
   const [editRecord, setEditRecord] = useState<MedicalRecord | null>(null);
   const [viewRecord, setViewRecord] = useState<MedicalRecord | null>(null);
 
@@ -39,8 +41,8 @@ export default function HospitalRecordsPage() {
 
   useEffect(() => { load(); }, []);
 
-  // Use the first active hospital by default (in a real app, link via user profile)
-  const currentHospital = hospitals[0];
+  // Cari hospital yang dipilih, fallback ke yang pertama jika belum dipilih
+  const currentHospital = hospitals.find((h) => h.id === selectedHospitalId) ?? hospitals[0];
 
   const handleCreate = async (data: Omit<MedicalRecord, 'id' | 'donorName' | 'hospitalName' | 'createdAt' | 'updatedAt'>) => {
     setFormLoading(true);
@@ -87,7 +89,9 @@ export default function HospitalRecordsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Rekam Medis</h1>
           <p className="text-gray-500 text-sm">{records.length} rekam medis tersimpan</p>
         </div>
-        <Button onClick={() => setShowAdd(true)}><Plus size={16} /> Input Rekam Medis</Button>
+        <Button onClick={() => { setShowDonorPicker(true); setSelectedDonorId(''); setSelectedHospitalId(''); }}>
+          <Plus size={16} /> Input Rekam Medis
+        </Button>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -141,30 +145,59 @@ export default function HospitalRecordsPage() {
         </div>
       </div>
 
-      {/* Add: first select donor */}
-      <Modal open={showAdd && !selectedDonorId} onClose={() => setShowAdd(false)} title="Pilih Donor">
+      {/* Step 1: Pilih donor dan rumah sakit */}
+      <Modal open={showDonorPicker} onClose={() => setShowDonorPicker(false)} title="Pilih Donor & Rumah Sakit">
         <div className="space-y-4">
           <Select
             label="Pilih Donor"
             value={selectedDonorId}
             onChange={(e) => setSelectedDonorId(e.target.value)}
-            options={donors.map((d) => ({ value: d.id, label: `${d.name} (${d.bloodType}${d.rhesus})` }))}
+            options={[
+              { value: '', label: '-- Pilih donor --' },
+              ...donors.map((d) => ({ value: d.id, label: `${d.name} (${d.bloodType}${d.rhesus}) — ${d.city}` })),
+            ]}
           />
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setShowAdd(false)} className="flex-1">Batal</Button>
-            <Button disabled={!selectedDonorId} onClick={() => {}} className="flex-1">Lanjut</Button>
+          <Select
+            label="Pilih Rumah Sakit"
+            value={selectedHospitalId}
+            onChange={(e) => setSelectedHospitalId(e.target.value)}
+            options={[
+              { value: '', label: '-- Pilih rumah sakit --' },
+              ...hospitals.filter((h) => h.isActive).map((h) => ({ value: h.id, label: h.name })),
+            ]}
+          />
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={() => setShowDonorPicker(false)} className="flex-1">Batal</Button>
+            <Button
+              disabled={!selectedDonorId || (!selectedHospitalId && hospitals.length === 0)}
+              onClick={() => {
+                if (!selectedHospitalId && hospitals.length > 0) {
+                  setSelectedHospitalId(hospitals[0].id);
+                }
+                setShowDonorPicker(false);
+                setShowAdd(true);
+              }}
+              className="flex-1"
+            >
+              Lanjut
+            </Button>
           </div>
         </div>
       </Modal>
 
-      {/* Add form */}
-      {showAdd && selectedDonorId && selectedDonor && currentHospital && (
-        <Modal open onClose={() => { setShowAdd(false); setSelectedDonorId(''); }} title="Input Rekam Medis Baru" size="xl">
+      {/* Step 2: Form rekam medis */}
+      {showAdd && selectedDonorId && selectedDonor && (
+        <Modal
+          open
+          onClose={() => { setShowAdd(false); setSelectedDonorId(''); }}
+          title="Input Rekam Medis Baru"
+          size="xl"
+        >
           <LabResultsForm
             donorId={selectedDonorId}
             donorName={selectedDonor.name}
-            hospitalId={currentHospital.id}
-            hospitalName={currentHospital.name}
+            hospitalId={currentHospital?.id ?? 'unknown'}
+            hospitalName={currentHospital?.name ?? 'Rumah Sakit'}
             onSubmit={handleCreate}
             onCancel={() => { setShowAdd(false); setSelectedDonorId(''); }}
             loading={formLoading}
@@ -173,7 +206,7 @@ export default function HospitalRecordsPage() {
       )}
 
       {/* Edit form */}
-      {editRecord && currentHospital && (
+      {editRecord && (
         <Modal open onClose={() => setEditRecord(null)} title="Edit Rekam Medis" size="xl">
           <LabResultsForm
             donorId={editRecord.donorId}
