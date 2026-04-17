@@ -11,7 +11,8 @@ export default function HospitalDonorsPage() {
 
   useEffect(() => {
     donorDb.getAll().then((all) => {
-      setDonors(all.filter((d) => d.status === 'assigned' || d.status === 'eligible'));
+      // Tampilkan semua donor kecuali yang ditolak
+      setDonors(all.filter((d) => d.status !== 'rejected'));
       setLoading(false);
     });
   }, []);

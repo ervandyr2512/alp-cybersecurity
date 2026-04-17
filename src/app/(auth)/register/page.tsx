@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Heart, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import { registerUser } from '@/lib/firebase/auth';
-import { donorDb } from '@/lib/firebase/database';
+import { donorDb, screeningDb } from '@/lib/firebase/database';
 import { ref, update } from 'firebase/database';
 import { db as _db } from '@/lib/firebase/config';
 const db = _db!;
@@ -86,7 +86,32 @@ export default function RegisterPage() {
         },
       });
 
-      // 3. Link donorId to user profile
+      // 3. Auto-create 3 pending screenings (satu per spesialisasi dokter)
+      const specializations = [
+        { type: 'SpPD-KGH', label: 'Spesialis Penyakit Dalam - Konsultan Ginjal Hipertensi' },
+        { type: 'Urologist', label: 'Urolog' },
+        { type: 'Forensic', label: 'Dokter Forensik' },
+      ] as const;
+      await Promise.all(
+        specializations.map((sp) =>
+          screeningDb.create({
+            donorId,
+            donorName: form.name,
+            doctorId: '',
+            doctorName: `Menunggu dokter ${sp.label}`,
+            doctorType: sp.type,
+            status: 'pending',
+            result: 'pending',
+            notes: '',
+            scheduledAt: '',
+          })
+        )
+      );
+
+      // 4. Update donor status to 'screening' dan update status donor
+      await donorDb.update(donorId, { status: 'screening' });
+
+      // 5. Link donorId to user profile
       await update(ref(db, `${DB_PATHS.USERS}/${fbUser.uid}`), { linkedId: donorId });
 
       setEmailSent(true);

@@ -31,7 +31,8 @@ export default function HospitalRecordsPage() {
       hospitalDb.getAll(),
     ]);
     setRecords(r);
-    setDonors(d.filter((dd) => dd.status === 'eligible' || dd.status === 'assigned'));
+    // Tampilkan semua donor kecuali yang ditolak sebagai pilihan input rekam medis
+    setDonors(d.filter((dd) => dd.status !== 'rejected'));
     setHospitals(h);
     setLoading(false);
   };
