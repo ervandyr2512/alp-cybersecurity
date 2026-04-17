@@ -85,14 +85,16 @@ function httpsPost(hostname, path, body) {
   });
 }
 
-// Helper: HTTPS PUT (untuk Realtime DB)
-function httpsPut(hostname, path, body) {
+// Helper: HTTPS PUT (untuk Realtime DB) — dengan auth token
+function httpsPut(hostname, path, body, idToken) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(body);
+    // Sertakan idToken sebagai query param agar Firebase Security Rules lolos
+    const authPath = idToken ? `${path}?auth=${idToken}` : path;
     const req = https.request(
       {
         hostname,
-        path,
+        path: authPath,
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -143,13 +145,14 @@ async function main() {
           continue;
         }
         const uid = loginRes.localId;
-        // Update profil di DB saja
+        const idToken = loginRes.idToken;
+        // Update profil di DB saja (gunakan idToken)
         const dbHost = DATABASE_URL.replace('https://', '');
         await httpsPut(dbHost, `/users/${uid}.json`, {
           ...acc.profile,
           email: acc.email,
           createdAt: new Date().toISOString(),
-        });
+        }, idToken);
         console.log(`OK (sudah ada, profil diperbarui, uid: ${uid})`);
       } else {
         console.log(`ERROR: ${authRes.error.message}`);
@@ -158,16 +161,21 @@ async function main() {
     }
 
     const uid = authRes.localId;
+    const idToken = authRes.idToken;
 
-    // 2. Simpan profil ke Realtime DB
+    // 2. Simpan profil ke Realtime DB (gunakan idToken agar lolos Security Rules)
     const dbHost = DATABASE_URL.replace('https://', '');
-    await httpsPut(dbHost, `/users/${uid}.json`, {
+    const dbRes = await httpsPut(dbHost, `/users/${uid}.json`, {
       ...acc.profile,
       email: acc.email,
       createdAt: new Date().toISOString(),
-    });
+    }, idToken);
 
-    console.log(`BERHASIL (uid: ${uid})`);
+    if (dbRes && dbRes.error) {
+      console.log(`AUTH OK tapi DB GAGAL: ${dbRes.error}`);
+    } else {
+      console.log(`BERHASIL (uid: ${uid})`);
+    }
   }
 
   console.log('\n' + '='.repeat(55));

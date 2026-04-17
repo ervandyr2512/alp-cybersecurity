@@ -30,8 +30,10 @@ export default function LoginPage() {
     try {
       const fbUser = await signIn(email, password);
       const profile = await getUserProfile(fbUser.uid);
-      // Cek verifikasi: dari Firebase Auth ATAU dari flag DB (untuk akun dummy/staff)
-      if (!fbUser.emailVerified && !profile?.isEmailVerified) {
+      // Verifikasi email hanya wajib untuk donor yang self-register.
+      // Akun doctor / hospital_staff dibuat oleh admin — tidak perlu verifikasi.
+      const isStaff = profile?.role === 'doctor' || profile?.role === 'hospital_staff' || profile?.role === 'admin';
+      if (!fbUser.emailVerified && !isStaff) {
         toast.error('Email belum diverifikasi. Cek kotak masuk Anda.');
         setLoading(false);
         return;
