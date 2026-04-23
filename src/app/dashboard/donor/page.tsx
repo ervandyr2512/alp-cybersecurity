@@ -30,10 +30,10 @@ export default function DonorDashboard() {
       if (!userProfile) { setLoading(false); return; }
       // Auto-provision donor record for Google OAuth users (legacy users
       // who signed in before the provisioning flow was added).
-      let linkedId = userProfile.linkedId;
+      let linkedId: string | undefined = userProfile.linkedId;
       if (!linkedId && userProfile.role === 'donor') {
         try {
-          linkedId = await provisionDonorForCurrentUser();
+          linkedId = (await provisionDonorForCurrentUser()) ?? undefined;
           await refreshProfile();
         } catch {
           setLoading(false);
