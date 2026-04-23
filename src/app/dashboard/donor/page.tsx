@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Heart, FlaskConical, UserCheck, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { donorDb, screeningDb, medicalRecordDb } from '@/lib/firebase/database';
+import { provisionDonorForCurrentUser } from '@/lib/firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Donor, Screening, MedicalRecord } from '@/types';
 import { DonorStatusBadge } from '@/components/ui/Badge';
@@ -18,7 +19,7 @@ const statusMessages: Record<string, { icon: React.ElementType; color: string; t
 };
 
 export default function DonorDashboard() {
-  const { userProfile } = useAuth();
+  const { userProfile, refreshProfile } = useAuth();
   const [donor, setDonor] = useState<Donor | null>(null);
   const [screenings, setScreenings] = useState<Screening[]>([]);
   const [records, setRecords] = useState<MedicalRecord[]>([]);
@@ -26,11 +27,24 @@ export default function DonorDashboard() {
 
   useEffect(() => {
     const load = async () => {
-      if (!userProfile?.linkedId) { setLoading(false); return; }
+      if (!userProfile) { setLoading(false); return; }
+      // Auto-provision donor record for Google OAuth users (legacy users
+      // who signed in before the provisioning flow was added).
+      let linkedId = userProfile.linkedId;
+      if (!linkedId && userProfile.role === 'donor') {
+        try {
+          linkedId = await provisionDonorForCurrentUser();
+          await refreshProfile();
+        } catch {
+          setLoading(false);
+          return;
+        }
+      }
+      if (!linkedId) { setLoading(false); return; }
       const [d, allScr, allRec] = await Promise.all([
-        donorDb.get(userProfile.linkedId),
-        screeningDb.getByDonor(userProfile.linkedId),
-        medicalRecordDb.getByDonor(userProfile.linkedId),
+        donorDb.get(linkedId),
+        screeningDb.getByDonor(linkedId),
+        medicalRecordDb.getByDonor(linkedId),
       ]);
       setDonor(d);
       setScreenings(allScr);
@@ -38,7 +52,7 @@ export default function DonorDashboard() {
       setLoading(false);
     };
     load();
-  }, [userProfile]);
+  }, [userProfile, refreshProfile]);
 
   if (loading) return <div className="text-center py-16 text-gray-400">Memuat data...</div>;
   if (!donor) {
