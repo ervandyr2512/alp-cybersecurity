@@ -7,8 +7,8 @@
 const https = require('https');
 
 // ── Config (dari .env.local) ─────────────────────────────────
-const API_KEY      = 'AIzaSyCdP84cjZjQAEuyvhBEmD6hzuMTLe70qFI';
-const DATABASE_URL = 'https://kidneyhub-id-default-rtdb.asia-southeast1.firebasedatabase.app';
+const API_KEY      = 'AIzaSyDisRVSjpN0nO7bf_ss8_yEW3kgsmMUF88';
+const DATABASE_URL = 'https://alp-cybersecurity-b38b3-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 // ── Akun dummy yang akan dibuat ───────────────────────────────
 const ACCOUNTS = [

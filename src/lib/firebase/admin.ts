@@ -1,7 +1,7 @@
 // ============================================================
-// KidneyHub - Firebase Admin SDK
+// alp-cybersecurity - Firebase Admin SDK
 // Untuk operasi server-side (API routes, middleware).
-// Service account: firebase-adminsdk-fbsvc@kidneyhub-id.iam.gserviceaccount.com
+// Service account: firebase-adminsdk-*@alp-cybersecurity-b38b3.iam.gserviceaccount.com
 // ============================================================
 
 import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';

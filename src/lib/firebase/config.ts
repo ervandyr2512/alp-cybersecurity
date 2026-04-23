@@ -1,7 +1,7 @@
 // ============================================================
-// KidneyHub - Firebase Configuration
-// Project: kidneyhub-id
-// App ID: 1:96952140150:web:a3ddbd8aaed1637cca3a57
+// alp-cybersecurity - Firebase Configuration
+// Project: alp-cybersecurity-b38b3
+// App ID: 1:440498965253:web:2fa2d9b9358f6c458d056c
 // ============================================================
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
