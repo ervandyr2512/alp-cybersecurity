@@ -47,3 +47,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ALP assignment templates (not to be committed)
+ALP Guide.pdf
+ALP Template.docx

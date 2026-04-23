@@ -9,6 +9,8 @@ import {
   signOut as firebaseSignOut,
   sendEmailVerification,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { ref, set, get } from 'firebase/database';
@@ -66,6 +68,41 @@ export async function signIn(email: string, password: string): Promise<FirebaseU
  */
 export async function signOut(): Promise<void> {
   await firebaseSignOut(auth);
+}
+
+/**
+ * Sign in (or register) via Google OAuth 2.0 popup.
+ * First-time Google users get a default 'donor' profile auto-created.
+ */
+export async function signInWithGoogle(): Promise<{ user: FirebaseUser; isNew: boolean }> {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  const credential = await signInWithPopup(auth, provider);
+  const fbUser = credential.user;
+
+  const existing = await get(ref(db, `${DB_PATHS.USERS}/${fbUser.uid}`));
+  let isNew = false;
+  if (!existing.exists()) {
+    const userRecord: Omit<User, 'uid'> = {
+      email: fbUser.email ?? '',
+      name: fbUser.displayName ?? fbUser.email?.split('@')[0] ?? 'Google User',
+      role: 'donor',
+      phone: '',
+      isEmailVerified: true,
+      createdAt: new Date().toISOString(),
+    };
+    await set(ref(db, `${DB_PATHS.USERS}/${fbUser.uid}`), userRecord);
+    isNew = true;
+  }
+  return { user: fbUser, isNew };
+}
+
+/**
+ * Return the current user's Firebase ID token (the JWT used by API guards).
+ */
+export async function getIdToken(): Promise<string | null> {
+  if (!auth.currentUser) return null;
+  return auth.currentUser.getIdToken();
 }
 
 /**

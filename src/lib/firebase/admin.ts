@@ -38,7 +38,13 @@ function getAdminApp(): App {
   // Opsi 2: Path ke file serviceAccountKey.json (untuk development lokal)
   if (process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_PATH) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const serviceAccount = require(process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_PATH);
+    const fs = require('fs') as typeof import('fs');
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('path') as typeof import('path');
+    const p = path.isAbsolute(process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_PATH)
+      ? process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_PATH
+      : path.join(process.cwd(), process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_PATH);
+    const serviceAccount = JSON.parse(fs.readFileSync(p, 'utf8'));
     adminApp = initializeApp({
       credential: cert(serviceAccount),
       databaseURL,
